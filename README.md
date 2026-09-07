@@ -54,7 +54,7 @@ check this list first if a feature seems dead.
 ## Installation
 
 ```bash
-git clone https://github.com/WheatySheep/dynamic-island
+git clone https://github.com/julianposch1307/dynamic-island
 cd dynamic-island
 cp -r shell.qml bar ~/.config/quickshell/
 mkdir -p ~/scripts && cp scripts/yays ~/scripts/
