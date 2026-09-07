@@ -9,7 +9,7 @@ ShellRoot {
 
     GlobalShortcut {
         name: "launcher"
-        onReleased: dynamicIsland.islandState = dynamicIsland.islandState === "launcher" ? "" : "launcher"
+        onPressed: dynamicIsland.islandState = dynamicIsland.islandState === "launcher" ? "" : "launcher"
     }
     
     GlobalShortcut {
@@ -20,11 +20,6 @@ ShellRoot {
     GlobalShortcut {
         name: "wallpaperswitcher"
         onPressed: dynamicIsland.islandState = dynamicIsland.islandState === "wallpaperswitcher" ? "" : "wallpaperswitcher"
-    }
-
-    GlobalShortcut {
-        name: "homeassistant"
-        onPressed: dynamicIsland.islandState = dynamicIsland.islandState === "homeassistant" ? "" : "homeassistant"
     }
 
     GlobalShortcut {
