@@ -1,0 +1,107 @@
+#!/usr/bin/env python3
+"""
+yays - yay search, clean
+Parses `yay -Ss <term>` output into a sorted, readable table.
+Sorted by popularity (desc), then votes (desc) - the AUR "is this any good" signal.
+Official repo packages (no votes/popularity) are pinned to the top as trusted.
+
+Usage: yays <search term>
+"""
+
+import re
+import subprocess
+import sys
+import shutil
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: yays <search term>")
+        sys.exit(1)
+
+    term = sys.argv[1]
+    result = subprocess.run(["yay", "-Ss", term], capture_output=True, text=True)
+    lines = result.stdout.splitlines()
+
+    header_re = re.compile(
+        r"^(?P<repo>\S+)/(?P<name>\S+)\s+(?P<ver>\S+)"
+        r"(?:\s+\(\+(?P<votes>\d+)\s+(?P<pop>[\d.]+)\))?"
+        r"(?:\s+\[(?P<age>[^\]]+)\])?"
+        r"(?:\s+\((?P<installed>Installed)\))?\s*$"
+    )
+
+    entries = []
+    i = 0
+    while i < len(lines):
+        m = header_re.match(lines[i])
+        if m:
+            desc = ""
+            if i + 1 < len(lines) and lines[i + 1].startswith((" ", "\t")):
+                desc = lines[i + 1].strip()
+                i += 1
+            entries.append(m.groupdict() | {"desc": desc})
+        i += 1
+
+    if not entries:
+        print(f"Keine Treffer für '{term}'.")
+        return
+
+    # official repo (no votes/pop field) sorts first, then by popularity, then votes
+    def sort_key(e):
+        is_aur_with_score = e["pop"] is not None
+        pop = float(e["pop"]) if e["pop"] else 0.0
+        votes = int(e["votes"]) if e["votes"] else 0
+        return (is_aur_with_score, pop, votes)
+
+    entries.sort(key=sort_key, reverse=True)
+
+    age_re = re.compile(r"(?:(\d+)d)?(?:(\d+)h)?(?:(\d+)m)?")
+
+    def age_to_days(age):
+        if not age:
+            return None
+        m = age_re.fullmatch(age)
+        if not m:
+            return None
+        d, h, _mi = (int(g) if g else 0 for g in m.groups())
+        total_days = d + h / 24
+        return "<1" if total_days < 1 else str(round(total_days))
+
+    name_width = 18
+    age_width = 12
+    term_width = shutil.get_terminal_size((120, 20)).columns
+    desc_width = max(
+        20, term_width - (6 + 1 + name_width + 1 + 6 + 1 + 6 + 1 + age_width + 2)
+    )
+
+    print(
+        f"{'REPO':<6} {'NAME':<{name_width}} {'VOTES':>6} {'POP':>6} {'UPDATE':>{age_width}}  DESC"
+    )
+    print(
+        "-"
+        * min(
+            term_width,
+            6 + 1 + name_width + 1 + 6 + 1 + 6 + 1 + age_width + 2 + desc_width,
+        )
+    )
+    for e in entries:
+        repo = e["repo"]
+        name = e["name"]
+        if e["installed"]:
+            name += " *"
+        if len(name) > name_width:
+            name = name[: name_width - 1] + "…"
+        votes = e["votes"] or ("-" if repo != "aur" else "0")
+        pop = e["pop"] or "-"
+        days = age_to_days(e["age"])
+        age = f"vor {days}d" if days else "-"
+        desc = e["desc"]
+        if len(desc) > desc_width:
+            desc = desc[: desc_width - 1] + "…"
+        print(
+            f"{repo:<6} {name:<{name_width}} {votes:>6} {pop:>6} {age:>{age_width}}  {desc}"
+        )
+
+
+if __name__ == "__main__":
+    main()
