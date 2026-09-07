@@ -46,6 +46,9 @@ Beyond searching applications, the input field understands a few prefixes:
 - `yt-dlp` — for `mp3 ` / `mp4 `
 - `awww` — wallpaper daemon used by the wallpaper switcher
 - `hyprlock` — for the power menu's lock action
+- `yay` and `python` — for the `i ` and `ii ` package prefixes. The bundled `yays`
+  script is a Python wrapper around `yay -Ss`; if you use a different AUR helper you
+  will want to adapt both.
 - `curl`, `bash`, `nmcli` — weather and the bar's status pills
 
 Anything missing simply does nothing when you trigger it — there is no error popup, so
